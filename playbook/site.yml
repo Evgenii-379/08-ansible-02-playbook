@@ -13,7 +13,7 @@
           ansible.builtin.get_url:
             url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.noarch.rpm"
             dest: "./{{ item }}-{{ clickhouse_version }}.rpm"
-          with_items: "{{ clickhouse_packages }}"
+          loop: "{{ clickhouse_packages }}"
       rescue:
         - name: Get clickhouse distrib
           ansible.builtin.get_url:
@@ -34,3 +34,49 @@
       register: create_db
       failed_when: create_db.rc != 0 and create_db.rc !=82
       changed_when: create_db.rc == 0
+
+- name: Install and Configure Vector
+  hosts: vector
+  vars:
+    vector_version: "0.43.0"
+    local_vector_file: "/home/evgenii/Загрузки/vector_0.43.0-1_amd64.deb"
+
+  handlers:
+    - name: Restart Vector service
+      become: true
+      ansible.builtin.service:
+        name: vector
+        state: restarted
+
+  tasks:
+    - name: Copy Vector distribution from local machine
+      ansible.builtin.copy:
+        src: "{{ local_vector_file }}"
+        dest: "/tmp/vector.deb"
+        mode: 0755
+
+    - name: Ensure the extraction directory exists
+      ansible.builtin.file:
+        path: /usr/local/vector/
+        state: directory
+        mode: '0755'  # нужные права доступа
+      become: true
+
+    - name: Install Vector package
+      ansible.builtin.apt:
+        deb: "/tmp/vector.deb"  # Установка .deb пакета
+        state: present
+      become: true
+
+    - name: Ensure the configuration directory exists
+      ansible.builtin.file:
+        path: /etc/vector/
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Restart Vector service after installation
+      ansible.builtin.service:
+        name: vector
+        state: restarted
+      become: true

@@ -1,5 +1,12 @@
 ---
-clickhouse:
-  hosts:
-    clickhouse-01:
-      ansible_host: <IP_here>
+    clickhouse:
+      hosts:
+        clickhouse-01:
+          ansible_host: 158.160.6.19
+          ansible_user: evgenii_1
+    vector:
+      hosts:
+        vector-01:
+          ansible_host: 51.250.18.55
+          ansible_user: evgenii_2
+
